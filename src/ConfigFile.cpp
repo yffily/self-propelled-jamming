@@ -5,7 +5,7 @@
 using std::string;
 
 ConfigFile::ConfigFile( string filename, string delimiter,
-                        string comment, string sentry )
+									      string comment, string sentry )
 	: myDelimiter(delimiter), myComment(comment), mySentry(sentry)
 {
 	// Construct a ConfigFile, getting keys and values from given file
@@ -56,7 +56,7 @@ std::ostream& operator<<( std::ostream& os, const ConfigFile& cf )
 {
 	// Save a ConfigFile to os
 	for( ConfigFile::mapci p = cf.myContents.begin();
-	     p != cf.myContents.end();
+			 p != cf.myContents.end();
 		 ++p )
 	{
 		// OLD LINE: os << p->first << " " << cf.myDelimiter << " ";

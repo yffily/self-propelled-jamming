@@ -19,7 +19,7 @@ outfolder=infolder
 picfolder=osp.join(outfolder,'pics')
 
 arrows='nu'
-snaps=100		# numbers or set of snapshots to be processed
+snaps=list(range(0,500,4))		# numbers or set of snapshots to be processed
 frame_rate=10
 
 def getParameters(folder):

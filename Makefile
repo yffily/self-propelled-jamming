@@ -1,42 +1,50 @@
 
-cc 	= g++	# g++
-cFLAG 	= -Wall -O4 # -g # 
-#LFLAGS=-O3 -lgsl -lgslcblas -L/home/henkes/local/lib -L/home/henkes/local/lib -lnetcdf_c++ -lnetcdf
-cLIB 	= -lm -lstdc++ -L/usr/lib/ # -lboost_system -lboost_filesystem #-L/usr/local/lib/ -L/usr/lib/
-cINC 	= # -I/usr/include/  #-I/usr/local/include
+CXX   = g++
+FLAGS = -Wall -O4 # -g # -ffast-math # 
+LIB   = # -lboost_filesystem -lboost_system #  -lm -lstdc++  # -L/usr/local/lib -L/usr/lib
+INC   = # -I/usr/lib # -I/usr/include  -I/usr/local/include
+CPPFLAGS = $(INC) $(LIB) $(FLAGS)
 
-cHEADERS = $(wildcard src/*.h)
-cSOURCES = $(wildcard src/*.cpp)
+HEADERS = $(shell find src -name "*.h")
+SRC = $(shell find src -name "*.cpp")
+OBJ = $(patsubst %.cpp, %.o, $(SRC))
+BIN = execute
+TMP = $(shell find . -name "src/*~")
+DEP = $(patsubst %.cpp, %.d, $(SRC))
 
-cOBJECTS = $(patsubst %.cpp, %.o, $(cSOURCES))
-cTARGET = execute # $(patsubst %.cpp, %.exe, $(cSOURCES))
+#--------------------------------------------------------
+# Rules for building objects and executable
 
+$(BIN) : $(OBJ)
+	$(CXX) $(CPPFLAGS) -o $(BIN) $(OBJ)
 
-# si il y a un code c++, on le compile
-# If there is a C++ code (i.e. if there are files that end in .cpp), compile as C++
-# Else: do nothing
-ifneq ($(cSOURCES),)
+%.o : %.cpp Makefile
+	$(CXX) $(CPPFLAGS) -c $< -o $@
 
-# les deux regles sont differentes :
-# la premiere cree chaque objet separement a partir de la source correspondante
-# ie autant de commandes qu'il y a de sources
-# la deuxieme cree un executable a partir de l'ensemble des objets
-# Rem : on peut omettre la premiere et utiliser la regle par defaut de make pour creer les objets
+#--------------------------------------------------------
+# Automatic dependencies: for each %.cpp, make a %.d that
+# lists the dependencies of %.cpp, then paste the contents
+# of all %.d files into the makefile.
 
-%.o : %.cpp %.h
-	$(cc) $(cLIB) $(cFLAG) $(cINC) -c $< -o $@
+%.d : %.cpp
+	@set -e; rm -f $@; \
+	$(CXX) $(CPPFLAGS) -MM -MT $*.o $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@
 
-$(cTARGET) : $(cOBJECTS) 
-	$(cc) $(cFLAG) $(cLIB) $(cINC) $(cOBJECTS) -o $(cTARGET)
-#	rm $(cOBJECTS)
+-include $(DEP)
 
-else
-all :
-	@echo "rien a compiler"
-endif
+#--------------------------------------------------------
 
 clean :
-	rm -r $(cOBJECTS) $(cTARGET)
+	rm -f $(OBJ) $(DEP) $(TMP) $(BIN)
 
-cleano :
-	rm $(cOBJECTS)
+cleanobj :
+	rm -f $(OBJ)
+
+cleandep :
+	rm -f $(DEP)
+	
+new :
+	make clean
+	make
+
+

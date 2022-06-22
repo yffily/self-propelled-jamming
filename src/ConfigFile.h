@@ -66,8 +66,8 @@ protected:
 // Methods
 public:
 	ConfigFile( string filename,
-	            string delimiter = "=",
-	            string comment = "#",
+							string delimiter = "=",
+							string comment = "#",
 				string sentry = "EndConfigFile" );
 	ConfigFile();
 	
@@ -164,8 +164,8 @@ inline bool ConfigFile::string_as_T<bool>( const string& s )
 	for( string::iterator p = sup.begin(); p != sup.end(); ++p )
 		*p = toupper(*p);  // make string all caps
 	if( sup==string("FALSE") || sup==string("F") ||
-	    sup==string("NO") || sup==string("N") ||
-	    sup==string("0") || sup==string("NONE") )
+			sup==string("NO") || sup==string("N") ||
+			sup==string("0") || sup==string("NONE") )
 		b = false;
 	return b;
 }

@@ -1,9 +1,9 @@
 # values of the different parameters
-
+1/N_2000/tau_100
 verbose = 1
 outdir = output			# folder to which the data will be written
-np = 100			# number of particles
-tsim = 1e3			# duration of the simulation
+np = 1000			# number of particles
+tsim = 5e2			# duration of the simulation
 nsuivi = 10			# frequency of progress status printing
 tprint = 1e0			# printing frequency
 tprintini = 0
@@ -11,8 +11,8 @@ tprintini = 0
 ### particle ###
 v0 = 1			# self propulsion velocity
 radius = 1		# average radius of the particles	[overwritten by 'Packing' initialization]
-polydis = 0		# half width of radius distribution	[overwritten by 'Packing' initialization]
-seed_iniRad = 321
+polydis = 0.2		# half width of radius distribution	[overwritten by 'Packing' initialization]
+seed_iniRad = 778
 
 
 ### interaction ###
@@ -31,10 +31,10 @@ r_bq = 5			# [Boussinesq] cut off radius of boussinesq interaction
 
 
 ### box ###
-boxtype = Rectangle			# shape of the simulation box
+boxtype = Rectangle		# shape of the simulation box
 boxfile = ../box_c.dat
-boxVec1 = (100,0)		# [Rectangle, Skew] cell vector 1
-boxVec2 = (0,100)		# [Rectangle, Skew] cell vector 2
+boxVec1 = (80.5625044091299,0)	# [Rectangle, Skew] cell vector 1
+boxVec2 = (0,80.5625044091299)	# [Rectangle, Skew] cell vector 2
 boxRadius = 50			# [Circle] box radius
 
 
@@ -48,28 +48,28 @@ rangeBox = 1.			# [Wall] wall interaction range
 
 
 ### initializer ###
-initype = Random			# type of initialization
+initype = Random		# type of initialization
 iniangletype = Random
 iniradtype = Random
 iniboxtype = Full		# [Random] shape of the initialization box
 				# (Full=use the simulation box)
 fillmode = L			# [Random] phi~N/L^2 ; fillmode is the one which is not fixed
-phi = 0.8			# [Random, File] packing fraction
+phi = 0.86			# [Random, File] packing fraction
 iniboxVec1 = (100,0)		# [Random] cell vector 1
 iniboxVec2 = (0,100)		# [Random] cell vector 2
 iniboxRadius = 20		# [Random] box radius
 offsetX = 0			# position of the center of the initialization box
 offsetY = 0
-seed_iniPos = 102		# [Random] seed for random initialization of positions
+seed_iniPos = 235		# [Random] seed for random initialization of positions
 seed_iniAngle = 13046		# [Random] seed for random initialization of angles
 iniformat = PosVel		# [File] format of file with initial positions
-inifilename = PosVel999.dat		# [File] name of the file with initial positions
+inifilename = PosVel1999.in	# [File] name of the file with initial positions
 
 
 ### dynamics ###
 numtype = Euler			# type of numerical integration
-dt = 5e-3			# timestep
-seed_rth = 24368		# seed for rotational thermal noise
+dt = 1e-3			# timestep
+seed_rth = 801			# seed for rotational thermal noise
 seed_tth = 28148		# seed for translational thermal noise
 sigma_r = 0.1			# rotational noise amplitude (Vicsek eta = 0.346)
 sigma_t = 0			# translational noise amplitude (Vicsek eta = 0.346)
@@ -77,7 +77,7 @@ filename_maxstep = maxstep.dat	# filename for writing max displacement during a 
 
 
 ### neighbor list ###
-NLtype = SquareVerlet		 	# type of neighbor list
+NLtype = Verlet_cell_list # SquareVerlet # 		# type of neighbor list
 rListType = Ratio		# Abs=read rList below, Ratio=adjust on Rint using ratio below
 rList = 6			# radius of neighbor list
 rListRatio = 1.1		# ratio of the radius of neighbor list over the range of the interaction
