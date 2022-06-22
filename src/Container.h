@@ -16,7 +16,7 @@ using namespace std;
 
 class Container {
   
-  Parameters * par;
+  Parameters * par, par_input;
   Box * box, * inibox;
   Initializer * ini;
   Dynamics * dyn;
@@ -28,12 +28,13 @@ class Container {
   public:
     Container(Parameters * par);
     ~Container()
-      { delete box; delete inibox;
+      { if (inibox!=box) { delete inibox; } delete box;
       delete ini; delete dyn; delete NL; delete BC;
-      delete inter; delete anginter; };
+      delete inter; delete anginter; 
+};
     
+    Dynamics * getDyn() const { return dyn; };
     double getTime() const { return dyn->getTime(); };  
-    
     const vector<Particle> & getPList() const { return pList; };
     const Particle & getPList(int i) const { return pList[i]; };
 

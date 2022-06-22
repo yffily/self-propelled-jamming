@@ -33,7 +33,9 @@ void Boundary_Glued::makeBoundary(vector<Particle> & pList) {
   double l=0, rad=par->BCradius+par->BCpolydis;
   while (l<=box->getPerimeter())
     {
-    pList.push_back(Particle(i,a*box->makeBoundaryPoint(l),rad,true,par));
+    pList.push_back(Particle(i,a*box->makeBoundaryPoint(l),par));
+    pList.back().setRadius(rad);
+    pList.back().setGlued(true);
     l+=rad*(1-par->BCoverlap)/a;
     rad=par->BCradius+par->BCpolydis*(2*RNG.get_double()-1);
     l+=rad*(1-par->BCoverlap)/a;

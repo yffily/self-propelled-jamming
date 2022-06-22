@@ -6,6 +6,7 @@
 #include <string>		// definit la classe de variable "string"
 #include <cmath>		// fonctions mathematiques de base
 #include <stdlib.h>
+#include <algorithm>
 #include "ConfigFile.h"
 #include "GeomVec.h"
 using namespace std;
@@ -13,22 +14,18 @@ using namespace std;
 
 class Parameters
   {
-  public:  				// to be made private !
-  string filename;
-  
+  public:				// to be made private !
   bool verbose;
   string outdir;			// output directory
   int np;
   double tsim;
   int nsuivi, nstepsuivi;
-  double tprint; int nprint;
+  double tprint, tprintini; int nprint, nprintini;
 
 // particle
   double v0;
-  double tau_S;
   double radius, polydis;		// radius of particles: average and half width
   unsigned int seed_iniRad;
-  bool selfAlign;
 
 // box
   string boxtype, boxfile;
@@ -43,12 +40,10 @@ class Parameters
   double BCradius, BCpolydis, BCoverlap;		// allows different radius for glued particles
 
 // initializer
-  string initype, iniangletype, iniformat, fillmode;
-  string paramfile;
+  string initype, iniangletype, iniradtype, iniformat, fillmode;
   unsigned long int seed_iniPos, seed_iniAngle;
   string inifilename;
   double phi;				// packing fraction
-  double stripfrac;			// width of the strip as a fraction of the box size
   string iniboxtype;
   Geomvec iniboxVec1, iniboxVec2;
   double iniboxRadius;
@@ -57,8 +52,8 @@ class Parameters
 // dynamics
   string numtype;
   double dt; int nstep;
-  double sigma;		// angular noise
-  unsigned long int seed_th;
+  double sigma_r, sigma_t;		// rotational and translational noise
+  unsigned long int seed_rth,seed_tth;
   string filename_maxstep;
 
 // interaction
@@ -66,7 +61,11 @@ class Parameters
   double eta;
   double k_rep;				// spring constant for contact repulsion
   double R_ad, F_ad;			// range and maximum force for adhesion
-  double tau_V;
+  double tau;
+  double a_vs, a_vn, a_F;		// a_vs/a_vn=coef of own/neighbor velocity in angular alignment
+  					// a_F=coef of force in angular alignment
+  double poisson, F_bq;			// poisson ratio and boussinesq interaction prefactor
+  double r_bq;				// cut off for boussinesq interaction
 
 // dynamics: neighbor list
   string NLtype;
@@ -76,8 +75,7 @@ class Parameters
 
 //  public:
     Parameters();
-    Parameters(const char* filename);
-//    Parameters(string filename) { Parameters(filename.c_str()); };
+    Parameters(char* filename);
     ~Parameters() {};
     
     void print(string filename);

@@ -4,6 +4,8 @@
 Container::Container(Parameters * par) {
   cout << fixed << setprecision(2);
   this->par=par;					// load the parameter file
+//  par_input=Parameters(*par);
+  par_input=*par;
   chooseBox(box,par);					// choose a type of box
   box->printBox();
   chooseIniBox(inibox,box,par);				// choose a type of box for initialization
@@ -13,12 +15,13 @@ Container::Container(Parameters * par) {
   BC->makeBoundary(pList);
   chooseInteraction(inter,par);				// choose a type of interaction
   chooseAngularInteraction(anginter,BC,par);		// choose a type of angular interaction
-  for (int i=0;i<par->np;i++) { pList[i].setSelfAlign(par->selfAlign); }	// sets self alignment
   chooseDynamics(dyn,BC,inter,anginter,par);			// choose a type of integrator
   cout << resetiosflags(ios::floatfield) << setprecision(3);
   chooseNeighborList(NL,BC,par);			// choose a type of neighbor list
-  NL->makeRInt(pList);
+  NL->makeRInt(pList,inter,anginter);
   NL->makeList(pList);
+  box->updatePar(par);
+  inibox->updateIniPar(par);
   cout << resetiosflags(ios::floatfield) << setprecision(10);
   par->print((par->outdir+"Parameters_final.dat"));
 }
@@ -26,6 +29,7 @@ Container::Container(Parameters * par) {
 
 void Container::update() {
   dyn->move(pList,NL);
+//  BC->Enforce(pList);
 }
 
 
@@ -44,8 +48,8 @@ void chooseBox(Box * & box, Parameters * par) {
   else if ((par->boxtype)=="Circle") { box=new Box_Circle(par); }
   else if ((par->boxtype)=="File")
     {
-    Reader R; R.readBox(par->boxfile);
-//    box=new Box_Circle(par); 
+    Reader R(par); R.readBox(par->boxfile);
+    chooseBox(box,par);
     }
   else
     { cout << "[Error] "+par->boxtype+" is not a known type of box." << endl; exit(100); }
@@ -58,17 +62,10 @@ void chooseIniBox(Box * & inibox, Box * & box, Parameters * par) {
   if (inipar.iniboxtype=="Full") { inibox=box; }
   else
     {
-    if (inipar.iniboxtype=="Strip")
-      { if (par->boxtype!="Rectangle")
-        { cout << "Sorry but 'Strip' mode only works with 'Rectangle' box." << endl; exit(100); }
-      if (par->fillmode=="L")
-        { cout << "Sorry but 'Strip' mode only doesn't work with 'L' fillmode." << endl; exit(100); }
-      inipar.boxVec1*=par->stripfrac; }
-    else
-      { inipar.boxtype=par->iniboxtype;
-      inipar.boxVec1=par->iniboxVec1;
-      inipar.boxVec2=par->iniboxVec2;
-      inipar.boxRadius=par->iniboxRadius; }
+    inipar.boxtype=par->iniboxtype;
+    inipar.boxVec1=par->iniboxVec1;
+    inipar.boxVec2=par->iniboxVec2;
+    inipar.boxRadius=par->iniboxRadius;
     chooseBox(inibox,&inipar);			// use inipar to build inibox
     inibox->setBoxFilename("inibox.dat");
     inibox->printBox();
@@ -102,6 +99,8 @@ void chooseInteraction(Interaction * & inter, Parameters * par) {
   if (par->inttype=="Elastic") { inter=new Interaction_Elastic(par->k_rep); }
   else if (par->inttype=="Adhesion")
     { inter=new Interaction_ElasticWithAdhesion(par->k_rep,par->F_ad,par->R_ad); }
+  else if (par->inttype=="Boussinesq")
+    { inter=new Interaction_Boussinesq(par->k_rep,par->poisson,par->F_bq,par->r_bq); }
   else if (par->inttype=="None") { inter=new Interaction(); }
   else
     { cout << "[Error] " << par->inttype << " is not a known type of interaction." << endl; exit(100); }
@@ -110,8 +109,10 @@ void chooseInteraction(Interaction * & inter, Parameters * par) {
 
 
 void chooseAngularInteraction(Interaction * & inter, Boundary * & BC, Parameters * par) {
-  if (par->anginttype=="Vicsek") { inter=new Interaction_Vicsek(BC,par->tau_V); }
-  else if (par->anginttype=="None") { inter=new Interaction(); }
+  if (par->anginttype=="Vicsek") { inter=new Interaction_Vicsek(BC,par->tau); }
+  else if (par->anginttype=="None" || par->anginttype=="Target") { inter=new Interaction(); }
+  else if (par->inttype=="Boussinesq")
+    { inter=new Interaction_Boussinesq(par->k_rep,par->poisson,par->F_bq,par->r_bq); }
   else
     { cout << "[Error] " << par->anginttype << " is not a known type of angular interaction." << endl; exit(100); }
   if (par->verbose) { cout << "Type of interaction: "+par->anginttype << endl; }
@@ -120,6 +121,7 @@ void chooseAngularInteraction(Interaction * & inter, Boundary * & BC, Parameters
 
 void chooseDynamics(Dynamics * & dyn, Boundary * BC, Interaction * inter, Interaction * anginter, Parameters * par) {
   if ((par->numtype)=="Euler") { dyn=new Dynamics_Euler(par,BC,inter,anginter); }
+  else if ((par->numtype)=="Euler_InstAng") { dyn=new Dynamics_Euler_InstAng(par,BC,inter,anginter); }
   else if ((par->numtype)=="RK2") { dyn=new Dynamics_RK2(par,BC,inter,anginter); }
   else
     { cout << "[Error] " << par->numtype << " is not a known type of integrator." << endl; exit(100); }
@@ -130,6 +132,8 @@ void chooseDynamics(Dynamics * & dyn, Boundary * BC, Interaction * inter, Intera
 void chooseNeighborList(NeighborList * & NL, Boundary * BC, Parameters * par) {
   if ((par->NLtype)=="Everyone") { NL=new NeighborList_Everyone(par,BC); }
   else if ((par->NLtype)=="Verlet") { NL=new NeighborList_Verlet(par,BC); }
+  else if ((par->NLtype)=="Square") { NL=new NeighborList_Square(par,BC); }
+  else if ((par->NLtype)=="SquareVerlet") { NL=new NeighborList_SquareVerlet(par,BC); }
   else
     { cout << "[Error] " << par->NLtype << " is not a known type of neighbor list." << endl; exit(100); }
   if (par->verbose) { cout << "Type of neighbor list: "+par->NLtype << endl; }

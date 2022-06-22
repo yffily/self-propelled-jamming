@@ -25,6 +25,7 @@ class Initializer {
   protected:
     Parameters * par;
     Reader R;
+    RNG_taus RNG_rad;
   
   public:
     Initializer() {};
@@ -36,6 +37,7 @@ class Initializer {
     void InitializeAngle_Random(vector<Particle> & pList);
     void InitializeAngle_Zero(vector<Particle> & pList);
     void InitializeAngle_Azimuthal(vector<Particle> & pList);
+    void InitializeAngle_Radial(vector<Particle> & pList);
     void rescale(double a, vector<Particle> & pList, Box * & inibox, Box * & box);
     void rescaleToPhi(double phi, vector<Particle> & pList, Box * & inibox, Box * & box);
 };
@@ -52,7 +54,7 @@ class Initializer_fromFile: public Initializer {
 
 class Initializer_Random: public Initializer {
   
-  RNG_taus RNG_pos, RNG_rad;
+  RNG_taus RNG_pos;
 
   public:
     Initializer_Random(Parameters * par): Initializer(par) {};
@@ -61,8 +63,6 @@ class Initializer_Random: public Initializer {
 
 
 class Initializer_Hex: public Initializer {		// hexagonal lattice
-  
-  RNG_taus RNG_rad;
   
   public:
     Initializer_Hex(Parameters * par): Initializer(par) {};

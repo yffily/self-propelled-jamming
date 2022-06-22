@@ -8,9 +8,11 @@
 #include "Particle.h"
 #include "GeomVec.h"
 #include "Interaction.h"
+#include "Parameters.h"
 using namespace std;
 
 class Interaction;
+class Parameters;
 
 class Box {
   
@@ -25,10 +27,10 @@ class Box {
 
   public:
     Box() {};
-    Box(Parameters * par);
+    Box(Parameters * & par);
 //    ~Box() { delete par; };
 
-    void setParameters(Parameters * par) { this->par=par; };
+    void setParameters(Parameters * & par) { this->par=par; };
     void setBoxFilename(string s) { boxFilename=s; };
     void setBoundingBoxFilename(string s) { boundingBoxFilename=s; };
 
@@ -54,6 +56,8 @@ class Box {
     void printBoundingBox() { printBoundingBox(par->outdir+boundingBoxFilename); };
     virtual void printBoundingBox(const string & filename);
     void printBoundary(const string & filename);
+    virtual void updatePar(Parameters * & par) {};
+    virtual void updateIniPar(Parameters * & par) {};
 };
 
 
@@ -93,6 +97,8 @@ class Box_Rectangle: public Box {
     Geomvec getWallForce(Interaction * inter, Particle * p);
     Geomvec bringBack(Geomvec & v);
     void printBox(const string & filename);
+    void updatePar(Parameters * & par);
+    void updateIniPar(Parameters * & par);
 };
  
 
@@ -114,6 +120,8 @@ class Box_Skew: public Box {
     Geomvec getWallForce(Interaction * inter, Particle * p);
     Geomvec bringBack(Geomvec & v);
     void printBox(const string & filename);
+    void updatePar(Parameters * & par);
+    void updateIniPar(Parameters * & par);
 };
 
 
@@ -131,6 +139,8 @@ class Box_Circle: public Box {
     Geomvec getWallForce(Interaction * inter, Particle * p);
     Geomvec bringBack(Geomvec & v);
     void printBox(const string & filename);
+    void updatePar(Parameters * & par);
+    void updateIniPar(Parameters * & par);
 };
 
 

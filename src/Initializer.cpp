@@ -10,6 +10,8 @@ void Initializer::InitializeAngle(vector<Particle> & pList) {
     { InitializeAngle_Zero(pList); }
   else if (par->iniangletype=="Azimuthal")
     { InitializeAngle_Azimuthal(pList); }
+  else if (par->iniangletype=="Radial")
+    { InitializeAngle_Radial(pList); }
   else
     { cout << "[Error] "+par->iniangletype+" is not a valid type of angle initializer." << endl; exit(100); }
   if (par->verbose) { cout << "Type of angle initialization: "+par->iniangletype << endl; }
@@ -40,12 +42,22 @@ void Initializer::InitializeAngle_Azimuthal(vector<Particle> & pList) {
     }
 }
 
+void Initializer::InitializeAngle_Radial(vector<Particle> & pList) {
+  vector <Particle>::iterator it;
+  for (it=pList.begin();it!=pList.end();it++)
+    { double angle=it->getPos().angle2D();
+    if (angle>pi) { angle-=dblpi; }
+    if (angle<=-pi) { angle+=dblpi; }
+    it->setAngle(angle);
+    }
+}
+
 void Initializer::rescale(double a, vector<Particle> & pList, Box * & inibox, Box * & box) {
   vector <Particle>::iterator it;
   for (it=pList.begin();it!=pList.end();it++)
     { it->setPos(a*it->getPos()); }
-  box->rescale(a);
-  inibox->rescale(a);
+  box->rescale(a); box->printBox();
+  if (inibox!=box) { inibox->rescale(a); inibox->printBox(); }
 }
 
 void Initializer::rescaleToPhi(double phi, vector<Particle> & pList, Box * & inibox, Box * & box) {
@@ -53,7 +65,7 @@ void Initializer::rescaleToPhi(double phi, vector<Particle> & pList, Box * & ini
   vector <Particle>::iterator it;
   for (it=pList.begin();it!=pList.end();it++)
     { area+=pi*it->getRadius()*it->getRadius(); }
-  double a=sqrt(par->phi*area/inibox->getArea());
+  double a=sqrt(area/(par->phi*inibox->getArea()));
   rescale(a,pList,inibox,box);
 }
 
@@ -61,6 +73,7 @@ void Initializer::rescaleToPhi(double phi, vector<Particle> & pList, Box * & ini
 // File
 
 void Initializer_fromFile::Initialize(vector<Particle> & pList, Box * & inibox, Box * & box) {
+  RNG_rad=RNG_taus(par->seed_iniRad);
   pList.clear();
   R.setParameters(par);
   if (par->verbose) { cout << " (loading " << par->inifilename << ")" << endl; }
@@ -72,34 +85,35 @@ void Initializer_fromFile::Initialize(vector<Particle> & pList, Box * & inibox, 
     { R.readPosVel(par->inifilename); }
   else if (par->iniformat=="Posinit")
     { R.readPosinit(par->inifilename); }
-  else if (par->iniformat=="MeanPos")
-    { R.readMeanPos(par->inifilename); }
   else
     { cout << "[Error] "+par->iniformat+" is not a known file format." << endl; exit(100); }
   for ( vector<Particle>::iterator it=(R.getPList()).begin() ; it<(R.getPList()).end(); it++ )
-    { if (inibox->isIn(it->getPos())) { pList.push_back(*it); } }
+    { if (inibox->isIn(it->getPos())) { pList.push_back(Particle(*it)); } }
 // numbers the particles correctly
   for (int i=0; i<int(pList.size()); i++ ) { pList[i].setID(i); }
-
-// !!!! special treatment of MeanPos !!!! (using par->np to identify glued particles)
-  if (par->iniformat=="MeanPos")
-    {
-    for (int i=par->np;i<int(pList.size());i++)
-      { pList[i].setGlued(true); }
-    cout << "[Warning] MeanPos: relying on np to identify glued particles." << endl;    
-    }
-  else if (int(pList.size())!=par->np)
+  if (int(pList.size())!=par->np && par->verbose)
     { cout << "[Warning] " << pList.size() << " particles read from file, np changed accordingly." << endl; }
-
   par->np=pList.size();
   if (par->iniangletype=="File")
     {
     if (!R.getHasAngles())
       { cout << "[Warning] File doesn't contains angles. Using random angles instead." << endl;
       par->iniangletype=="Random"; }
-//      { cout << "[Error] Can't initialize angles from file if positions aren't." << endl; exit(100); }
     }
   else { InitializeAngle(pList); }
+  if (par->iniradtype=="File" and !R.getHasRadii())
+    { cout << "[Warning] File doesn't contains radii. Using random radii instead." << endl;
+    par->iniradtype=="Random"; }
+  if (par->iniradtype=="Random")
+    {
+    vector <Particle>::iterator it;
+    for (it=pList.begin();it!=pList.end();it++)
+      { it->setRadius(par->radius+2.0*par->polydis*(RNG_rad.get_double()-0.5)); }
+    }
+  else
+    { cout << "[Error] "+par->iniradtype+" is not a valid type of radii initializer." << endl; exit(100); }
+  if (par->verbose) { cout << "Type of radius initialization: "+par->iniradtype << endl; }
+
   
 // !! no !! the box has to be adjusted to the file read !
   if (par->initype=="File_rescaled") { rescaleToPhi(par->phi,pList,inibox,box); }
@@ -131,7 +145,10 @@ void Initializer_Random::Initialize(vector<Particle> & pList, Box * & inibox, Bo
   if ((par->fillmode)=="L")
     { validMode=true;
     double a=sqrt(area/(par->phi*inibox->getArea()));
-    inibox->rescale(a); inibox->printBox();
+// here I rescale the simulation box when rescaling the initialization box
+// it could work the other way as well (could be made an option)
+    box->rescale(a); box->printBox();
+    if (inibox!=box) { inibox->rescale(a); inibox->printBox(); }
     if (par->verbose) { cout << "[L mode] Box dimensions multiplied by " << a; } }
   if (!validMode)
     { cout << "[Error] "+par->fillmode+" is not a known fillmode." << endl; exit(100); }
@@ -142,7 +159,7 @@ void Initializer_Random::Initialize(vector<Particle> & pList, Box * & inibox, Bo
     x=inibox->getBoundingSizeX()*(RNG_pos.get_double()-0.5);
     y=inibox->getBoundingSizeY()*(RNG_pos.get_double()-0.5);
     Geomvec pos(x,y);
-    if (box->isIn(pos))
+    if (inibox->isIn(pos))
       {
       pos+=par->offsetX*Geomvec(1.,0.)+par->offsetY*Geomvec(0.,1.);
       pList.push_back(Particle(i,pos,par));
@@ -170,11 +187,16 @@ void Initializer_Hex::Initialize(vector<Particle> & pList, Box * & inibox, Box *
     if (par->verbose) { cout << "[N mode] Number of particles changed to " << par->np << endl; } }
   else if ((par->fillmode)=="L")
     { double a=par->radius*sqrt(par->np*pi/(par->phi*inibox->getArea()));
+// here I rescale the simulation box when rescaling the initialization box
+// it could work the other way as well (could be made an option)
+    box->rescale(a); box->printBox();
     inibox->rescale(a); inibox->printBox();
     if (par->verbose) { cout << "[L mode] Box dimensions multiplied by " << a << endl; } }
   else if ((par->fillmode)!="phi")
     { cout << "[Error] "+par->fillmode+" is not a known fillmode." << endl; exit(100); }
   cout << "[Warning] 'Hex' initialization: N or phi is only matched approximately" << endl;
+  
+  
   double spacing=sqrt(2*inibox->getArea()/(sqrt(3.)*par->np));
   int nx=int(inibox->getBoundingSizeX()/(2*spacing))+1;
   int ny=int(inibox->getBoundingSizeY()/(spacing*sqrt(3.)))+1;
@@ -199,23 +221,26 @@ void Initializer_Hex::Initialize(vector<Particle> & pList, Box * & inibox, Box *
         }
       }
     }
+  if (par->BCtype=="glued")
+    {
 // sweep through particles vertically then horizontally to find boundaries
-  for (int i=0;i<2*nx+3;i++)
-    { int j=0;
-    while(j<2*ny+3 && kEdge[i][j]==-1) { j++; }
-    if (j<2*ny+2) { pList[kEdge[i][j]].setGlued(true); }
-    j=2*ny+2;
-    while(j>0 && kEdge[i][j]==-1) { j--; }
-    if (j>0) { pList[kEdge[i][j]].setGlued(true); }
-    }
-  for (int j=0;j<2*ny+3;j++)
-    { int i=0;
-    while(i<2*nx+3 && kEdge[i][j]==-1) { i++; }
-    if (i<2*nx+2) { pList[kEdge[i][j]].setGlued(true); }
-    i=2*nx+2;
-    while(i>0 && kEdge[i][j]==-1) { i--; }
-    if (i>0) { pList[kEdge[i][j]].setGlued(true); }
-    }
+		for (int i=0;i<2*nx+3;i++)
+		  { int j=0;
+		  while(j<2*ny+3 && kEdge[i][j]==-1) { j++; }
+		  if (j<2*ny+2) { pList[kEdge[i][j]].setGlued(true); }
+		  j=2*ny+2;
+		  while(j>0 && kEdge[i][j]==-1) { j--; }
+		  if (j>0) { pList[kEdge[i][j]].setGlued(true); }
+		  }
+		for (int j=0;j<2*ny+3;j++)
+		  { int i=0;
+		  while(i<2*nx+3 && kEdge[i][j]==-1) { i++; }
+		  if (i<2*nx+2) { pList[kEdge[i][j]].setGlued(true); }
+		  i=2*nx+2;
+		  while(i>0 && kEdge[i][j]==-1) { i--; }
+		  if (i>0) { pList[kEdge[i][j]].setGlued(true); }
+		  }
+		}
 // (re)calculate the packing fraction
   double area=0.;
   for (vector<Particle>::iterator it=pList.begin(); it<pList.end(); it++)

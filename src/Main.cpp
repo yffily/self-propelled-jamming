@@ -12,6 +12,7 @@
 #include "Printer.h"
 #include "Constants.h"
 using namespace std;
+//namespace bfs = boost::filesystem;
 
 string TimeToDate(double t);
 
@@ -20,7 +21,7 @@ int main(int argc,char* argv[])
   Geomvec(2);					// initialize number of dimensions
   Parameters par(argv[1]);			// load parameter file
   system(("mkdir "+par.outdir).c_str());
-  system(("cp "+string(argv[1])+" "+par.outdir+par.filename).c_str());
+  system(("cp "+string(argv[1])+" "+par.outdir+"Parameters_input.dat").c_str());
 // initialize variables for measuring computing time
   clock_t start, end;
   time_t tstart, tend;
@@ -39,12 +40,13 @@ int main(int argc,char* argv[])
     {
 // print progress status
     if (it%par.nstepsuivi==0)
-      { time(&tend);
-      cout << it/par.nstepsuivi << "/" << par.nsuivi << "\t" << asctime(localtime(&tend)); }
+      { time(&tend); 
+      cout << it/par.nstepsuivi << "/" << par.nsuivi << "\t" << asctime(localtime(&tend));
+      C.getDyn()->resetDrMax(); }
 // updates the particle list (ie forward 1 time step)
     C.update();
 // print outputs
-    if (it%par.nprint==0)
+    if (it>=par.nprintini && it%par.nprint==0)
       {
       stringstream ss;
       ss << par.outdir << "PosVel/PosVel" << it/par.nprint << ".dat";

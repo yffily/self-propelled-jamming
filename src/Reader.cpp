@@ -86,25 +86,6 @@ void Reader::readPosinit(const string & filename) {
 
 
 
-void Reader::readMeanPos(const string & filename) {
-  open(filename);
-  string line;
-  pList.clear();
-  int i=0; double x,y,c,r;	// c=contact number
-  while (getline(is,line))
-    {
-    istringstream iss(line);
-    iss >> x >> y >> c >> r;
-    pList.push_back(Particle(i,Geomvec(x,y),par));
-    pList.back().setRadius(r);
-    i++;
-    }
-  is.close();
-  hasRadii=true; hasAngles=false;
-}
-
-
-
 void Reader::glueBoundary() {
   if (hasAngles && pList.front().getAngle()!=0) { glueBoundaryByAngle(); }
   else 
@@ -134,27 +115,23 @@ void Reader::readBox(const string & filename) {
   is.close();
 // if all particles are equidistant from the origin it's a circle
   bool circle=true; double r2=boundary.begin()->norm2();
-    cout << r2 << endl;
+//  cout << r2 << endl;
   vector<Geomvec>::iterator it=boundary.begin()+1;
   while(circle && it<boundary.end())
-    {
-    cout << it->norm2() << endl;
-    if (it->norm2()/r2-1>1e-3) { circle=false; }
-    it++;
-    }
-// warns if unexpected file structure
-  if ((boundary.size()>5 && !circle) || (boundary.size()==5 && boundary[0]!=boundary[4]) || boundary.size()<5)
-    { cout << "[Warning] readBox unable to recognize box." << endl; exit(100); }
-  if (circle)
+    { if (it->norm2()/r2-1>1e-3) { circle=false; }
+    it++; }
+  if (boundary.size()>5 && circle)
     { double radius=sqrt(r2);
-    cout << "Box is a circle of radius " << radius << endl; exit(0); }
-  else
-    {
-    Geomvec u1=boundary[1]+boundary[2];
+    cout << "Box is a circle of radius " << radius << endl; }
+  else if (boundary.size()==5 && boundary[0]==boundary[4])
+    { Geomvec u1=boundary[1]+boundary[2];
     Geomvec u2=boundary[2]+boundary[3];
-    cout << "Box is skew with vectors u1=" << u1 << " and u2=" << u2 << endl; exit(0);
-    }
-  
+    par->boxtype="Skew";
+    par->boxVec1=u1;
+    par->boxVec2=u2;
+    cout << "Box is skew with vectors u1=" << u1 << " and u2=" << u2 << endl; }
+  else 
+    { cout << "[Warning] readBox unable to recognize box." << endl; exit(100); }
 }
 
 

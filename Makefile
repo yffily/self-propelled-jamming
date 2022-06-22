@@ -40,4 +40,3 @@ clean :
 
 cleano :
 	rm $(cOBJECTS)
-

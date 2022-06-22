@@ -1,19 +1,17 @@
 # values of the different parameters
 
 verbose = 1
-outdir = output 	# folder to which the data will be written
+outdir = output			# folder to which the data will be written
 np = 100			# number of particles
-tsim = 1e2			# duration of the simulation
+tsim = 1e3			# duration of the simulation
 nsuivi = 10			# frequency of progress status printing
-tprint = 1e-1		# printing frequency
-
+tprint = 1e0			# printing frequency
+tprintini = 0
 
 ### particle ###
-v0 = 0.005			# self propulsion velocity
-selfAlign = 1
-tau_S = 1			# angular coupling time with self velocity
-radius = 1		    # average radius of the particles	[overwritten by 'Packing' initialization]
-polydis = 0.2		# half width of radius distribution	[overwritten by 'Packing' initialization]
+v0 = 1			# self propulsion velocity
+radius = 1		# average radius of the particles	[overwritten by 'Packing' initialization]
+polydis = 0		# half width of radius distribution	[overwritten by 'Packing' initialization]
 seed_iniRad = 321
 
 
@@ -23,18 +21,25 @@ k_rep = 10			# [Elastic] spring constant
 R_ad = 0			# [Adhesion] range of adhesion
 F_ad = 0			# [Adhesion] maximum adhesion force
 anginttype = None		# type of angular interactions
-tau_V = 1			# [Vicsek] angular coupling time with neighbors
+tau = 1				# angular coupling time with neighbors
+a_vs = 1			# [Target] coef of <v0>
+a_vn = 0			# [Target] coef of <v0>
+a_F = 1				# [Target] coef of F
+poisson = 0.5			# [Boussinesq] poisson ratio of the substrate
+F_bq = 1			# [Boussinesq] prefactor of boussinesq interaction
+r_bq = 5			# [Boussinesq] cut off radius of boussinesq interaction
 
 
 ### box ###
-boxtype = Circle		# shape of the simulation box
+boxtype = Rectangle			# shape of the simulation box
+boxfile = ../box_c.dat
 boxVec1 = (100,0)		# [Rectangle, Skew] cell vector 1
 boxVec2 = (0,100)		# [Rectangle, Skew] cell vector 2
 boxRadius = 50			# [Circle] box radius
 
 
 ### boundary ###
-BCtype = Glued			# type of boundary
+BCtype = Periodic		# type of boundary
 BCradius = 1			# [Glued] average radius of boundary particles
 BCpolydis = 0.5			# [Glued] half width of radius distribution of boundary particles
 BCoverlap = 0.3			# [Glued] overlapping fraction of neighboring boundary particles
@@ -43,39 +48,37 @@ rangeBox = 1.			# [Wall] wall interaction range
 
 
 ### initializer ###
-initype = Random		# type of initialization
+initype = Random			# type of initialization
 iniangletype = Random
+iniradtype = Random
 iniboxtype = Full		# [Random] shape of the initialization box
-				# (Full=use the simulation box, Strip=make strip from rectangular box)
+				# (Full=use the simulation box)
 fillmode = L			# [Random] phi~N/L^2 ; fillmode is the one which is not fixed
-phi = 1.4			# [Random, File] packing fraction
-stripfrac = 0.25		# [Random, File + Strip] fraction of the box occupied by the strip
+phi = 0.8			# [Random, File] packing fraction
 iniboxVec1 = (100,0)		# [Random] cell vector 1
-iniboxVec2 = (0,50)		# [Random] cell vector 2
+iniboxVec2 = (0,100)		# [Random] cell vector 2
 iniboxRadius = 20		# [Random] box radius
 offsetX = 0			# position of the center of the initialization box
 offsetY = 0
 seed_iniPos = 102		# [Random] seed for random initialization of positions
 seed_iniAngle = 13046		# [Random] seed for random initialization of angles
-iniformat = Packing		# [File] format of file with initial positions
-inipath = ./../../configurations/phi1.2/N4096/		# [File] path to the initial packing
-inifilename = conf0.dat		# [File] name of the file with initial positions
+iniformat = PosVel		# [File] format of file with initial positions
+inifilename = PosVel999.dat		# [File] name of the file with initial positions
 
 
 ### dynamics ###
 numtype = Euler			# type of numerical integration
-dt = 2e-3			# timestep
-seed_th = 24368			# seed for thermal noise
-sigma = 1e-1			# (angular) noise amplitude (Vicsek eta = 0.346) !!! sigma not sigma^2
+dt = 5e-3			# timestep
+seed_rth = 24368		# seed for rotational thermal noise
+seed_tth = 28148		# seed for translational thermal noise
+sigma_r = 0.1			# rotational noise amplitude (Vicsek eta = 0.346)
+sigma_t = 0			# translational noise amplitude (Vicsek eta = 0.346)
 filename_maxstep = maxstep.dat	# filename for writing max displacement during a time step
 
 
 ### neighbor list ###
-NLtype = Verlet 	 	# type of neighbor list
+NLtype = SquareVerlet		 	# type of neighbor list
 rListType = Ratio		# Abs=read rList below, Ratio=adjust on Rint using ratio below
 rList = 6			# radius of neighbor list
 rListRatio = 1.1		# ratio of the radius of neighbor list over the range of the interaction
-
-
-
 

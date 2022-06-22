@@ -1,6 +1,14 @@
 #include "Interaction.h"
 
 
+double Interaction::getRContactInt(vector<Particle> & pList) {
+  double rInt=0.;
+  vector<Particle>::iterator i;
+  for (i=pList.begin();i!=pList.end();i++)
+    { if (2*i->getRadius()>rInt) { rInt=2*i->getRadius(); } }
+  return rInt;
+}
+
 
 // Elastic
 
@@ -24,7 +32,6 @@ Interaction_ElasticWithAdhesion::Interaction_ElasticWithAdhesion(const double k_
   k_ad=4*F_ad/(R_ad*R_ad);
 }
 
-
 Geomvec Interaction_ElasticWithAdhesion::getForce(const Geomvec & dpos, const double & dist, const double & cutoff) {
   if (dist>cutoff+R_ad)
     { return Geomvec(0.,0.); }
@@ -39,12 +46,11 @@ Geomvec Interaction_ElasticWithAdhesion::getForce(const Particle & p, const Neig
 }
 
 
-
 // Vicsek
 
 double Interaction_Vicsek::getTorque(const Particle & p, const Neighbor & n) {
 //  if (n.getContact()) {
-  return BC->EnforceAngle(n.getPart()->getAngle()-p.getAngle())/tau_V; // }
+  return BC->EnforceAngle(n.getPart()->getAngle()-p.getAngle())/tau; // }
 //  else
 //    { return 0.; }
 }

@@ -18,10 +18,10 @@ class Particle {
   Geomvec vel;
   double angle;
   double angvel;
+  Geomvec aVel;			// active velocity=v0*(cos(angle),sin(angle))
   Geomvec noise;
   double angnoise;
-  double v0, tau_S;
-  bool selfAlign;
+  double v0;
   
   int index;
   bool glued;
@@ -35,8 +35,8 @@ class Particle {
     Particle(int i, Geomvec v, Parameters * par);
     Particle(int i, Geomvec v, double angle);
     Particle(int i, Geomvec v, double angle, Parameters * par);
-	Particle(int i, Geomvec v, double radius, double angle, Parameters * par);
-	Particle(int i, Geomvec pos, double radius, bool glued, Parameters * par);
+    Particle(int i, Geomvec v, double radius, double angle, Parameters * par);
+    Particle(int i, Geomvec pos, double radius, bool glued, Parameters * par);
 //    Particle(Parameters par);
 //    ~Particle();
     
@@ -50,26 +50,24 @@ class Particle {
     void setNoise(RNG_taus & RNG, const double sigma);
     void setAngNoise(RNG_taus & RNG, const double sigma);
     void setV0(double v0) { this->v0=v0; };
-    void setTau_S(double tau_S) { this->tau_S=tau_S; };
     void setNc(int nc) { this->nc=nc; };
-    void setSelfAlign(bool selfAlign) { this->selfAlign=selfAlign; };
 
     int getID() const { return index; };
     Geomvec getPos() const { return pos; };
     Geomvec getVel() const { return vel; };
     double getAngle() const { return angle; };
     double getAngVel() const { return angvel; };
+    Geomvec getAVel() const { return aVel; };
     double getRadius() const { return radius; };
     bool getGlued() const { return glued; };
     Geomvec getNoise() { return noise; };
     double getAngNoise() { return angnoise; };
     double getV0() const { return v0; };
-    double getTau_S() const { return tau_S; };
     int getNc() const { return nc; };
-    bool setSelfAlign() const { return selfAlign; };
 
     void addPos(const Geomvec & pos) { this->pos+=pos; };
     void addAngle(const double & angle) { this->angle+=angle; };
+    void updateAVel() { aVel=v0*Geomvec(angle); };
     void addVel(const Geomvec & vel) { this->vel+=vel; };
     void addAngVel(const double & angvel) { this->angvel+=angvel; };
     void addNc(const int i) { this->nc+=i; };
@@ -77,6 +75,7 @@ class Particle {
     void setAlignAngVel();
     void move(const double & dt);
     bool move(const double & dt, double & dposmax, double & dangmax);
+    bool move_cstVel(const double & dt, double & dposmax, double & dangmax);
     void printPos(ofstream & stm) const;
 	void printPosRad(ofstream & stm) const;
     void printVel(ofstream & stm) const;

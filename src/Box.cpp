@@ -1,7 +1,7 @@
 #include "Box.h"
 
 
-Box::Box(Parameters * par) {
+Box::Box(Parameters * & par) {
   this->par=par;
   boxFilename="box.dat";
   boundingBoxFilename="boundingBox.dat";
@@ -123,13 +123,25 @@ Geomvec Box_Rectangle::getWallForce(Interaction * inter, Particle * p) {
 }
 
 Geomvec Box_Rectangle::bringBack(Geomvec & v) {
-  if (v.getX(0)>halfBoxSizeX) { v-=vx; }
-  if (v.getX(0)<=-halfBoxSizeX) { v+=vx; }
-  if (v.getX(1)>halfBoxSizeY) { v-=vy; }
-  if (v.getX(1)<=-halfBoxSizeY) { v+=vy; }
+  while (v.getX(0)>halfBoxSizeX) { v-=vx; }
+  while (v.getX(0)<=-halfBoxSizeX) { v+=vx; }
+  while (v.getX(1)>halfBoxSizeY) { v-=vy; }
+  while (v.getX(1)<=-halfBoxSizeY) { v+=vy; }
   return v;
 }
 
+void Box_Rectangle::updatePar(Parameters * & par) {
+  par->boxtype="Rectangle";
+  par->boxVec1=vx;
+  par->boxVec2=vy;
+}
+
+void Box_Rectangle::updateIniPar(Parameters * & par) {
+// if iniboxtype was "Full" that information should be kept!
+  if (par->iniboxtype!="Full") { par->iniboxtype="Rectangle"; }
+  par->iniboxVec1=vx;
+  par->iniboxVec2=vy;
+}
 
 
 // Skew rectangle //
@@ -189,6 +201,17 @@ void Box_Skew::printBox(const string & filename) {
   os.close();
 }
 
+void Box_Skew::updatePar(Parameters * & par) {
+  par->boxtype="Skew";
+  par->boxVec1=v1;
+  par->boxVec2=v2;
+}
+
+void Box_Skew::updateIniPar(Parameters * & par) {
+  par->iniboxtype="Skew";
+  par->iniboxVec1=v1;
+  par->iniboxVec2=v2;
+}
 
 
 // Circle box //
@@ -236,6 +259,16 @@ void Box_Circle::printBox(const string & filename) {
   for (double angle=0; angle<=dblpi; angle+=dangle)
   os << radius*Geomvec(angle) << endl;
   os.close();
+}
+
+void Box_Circle::updatePar(Parameters * & par) {
+  par->boxtype="Circle";
+  par->boxRadius=radius;
+}
+
+void Box_Circle::updateIniPar(Parameters * & par) {
+  par->iniboxtype="Circle";
+  par->iniboxRadius=radius;
 }
 
 

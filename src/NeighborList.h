@@ -5,12 +5,18 @@
 #include <list>
 #include <stdlib.h>
 #include <cmath>
+#include <algorithm>
 #include "Particle.h"
 #include "GeomVec.h"
 #include "Boundary.h"
+#include "Interaction.h"
 using namespace std;
 
 class Boundary;
+class Box;
+class Particle;
+class Parameters;
+class Interaction;
 
 class Neighbor {
 
@@ -55,16 +61,17 @@ class NeighborList {
     vector <list <Neighbor> > HNL;		// half neighbor list (no double counting)
     vector <int> nN;				// number of neighbors
     double rInt, rInt2;
-
+    
   public:
     NeighborList() {};
     NeighborList(Parameters * par, Boundary * BC);
 
     vector <list <Neighbor> > & getHNL() { return HNL; };
     list <Neighbor> & getHNL(int i) { return HNL[i]; };
-    virtual void makeRInt(vector<Particle> & pList) {};
+    void makeRInt(vector<Particle> & pList, Interaction * inter, Interaction * anginter);
+    virtual void checkRInt() {};
 
-    void checkNeighbors(vector<Particle> & pList);
+    void checkNeighbors(vector<Particle> & pList, Interaction * inter, Interaction * anginter);
     virtual bool checkForUpdate(vector<Particle> & pList) { return false; };
     virtual void makeList(vector<Particle> & pList) =0;
     void printNeighborList(const string & filename);
@@ -80,15 +87,38 @@ class NeighborList_Everyone: public NeighborList {
 };
  
 
+class NeighborList_Square: public NeighborList {
+
+  public:
+    NeighborList_Square(Parameters * par, Boundary * BC): NeighborList(par,BC) {};
+    virtual bool checkForUpdate(vector<Particle> & pList) { return true; };
+    void makeList(vector<Particle> & pList);
+};
+ 
+
+class NeighborList_SquareVerlet: public NeighborList {
+
+  protected:
+    double rList, rList2, rUpdate2;
+    vector<Geomvec>  pList_last;		// list of positions at last NL update
+
+  public:
+    NeighborList_SquareVerlet(Parameters * par, Boundary * BC);
+    void checkRInt();
+    bool checkForUpdate(vector<Particle> & pList);
+    void makeList(vector<Particle> & pList);
+};
+ 
+
 class NeighborList_Verlet: public NeighborList {
 
   protected:
-    double rInt, rList, rList2, rUpdate2;
+    double rList, rList2, rUpdate2;
     vector<Geomvec>  pList_last;		// list of positions at last NL update
 
   public:
     NeighborList_Verlet(Parameters * par, Boundary * BC);
-    void makeRInt(vector<Particle> & pList);
+    void checkRInt();
     bool checkForUpdate(vector<Particle> & pList);
     void makeList(vector<Particle> & pList);
 };

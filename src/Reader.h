@@ -40,7 +40,6 @@ class Reader {
     void readPos(const string & filename);
     void readPosVel(const string & filename);
     void readPosinit(const string & filename);
-    void readMeanPos(const string & filename);
     void glueBoundary();
     void glueBoundaryByAngle();
     
